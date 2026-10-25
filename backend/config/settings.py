@@ -8,6 +8,7 @@ See README.md for the startup steps.
 
 import os
 from pathlib import Path
+import dj_database_url
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -63,27 +64,17 @@ WSGI_APPLICATION = "config.wsgi.application"
 ASGI_APPLICATION = "config.asgi.application"
 
 # ------------------------------------------------------------------
-# Database: SQLite for local development (easy, no installation needed).
-# Switch back to PostgreSQL for production by restoring the config below.
+# Database:
+# - Production (Render): reads DATABASE_URL environment variable automatically
+# - Local development:   falls back to SQLite (no installation needed)
 # ------------------------------------------------------------------
 DATABASES = {
-    "default": {
-        "ENGINE": "django.db.backends.sqlite3",
-        "NAME": BASE_DIR / "db.sqlite3",
-    }
+    "default": dj_database_url.config(
+        default=f"sqlite:///{BASE_DIR / 'db.sqlite3'}",
+        conn_max_age=600,
+        conn_health_checks=True,
+    )
 }
-
-# --- PostgreSQL config (for production) ---
-# DATABASES = {
-#     "default": {
-#         "ENGINE": "django.db.backends.postgresql",
-#         "NAME": os.environ.get("POSTGRES_DB", "coding_ai"),
-#         "USER": os.environ.get("POSTGRES_USER", "postgres"),
-#         "PASSWORD": os.environ.get("POSTGRES_PASSWORD", "postgres"),
-#         "HOST": os.environ.get("POSTGRES_HOST", "localhost"),
-#         "PORT": os.environ.get("POSTGRES_PORT", "5432"),
-#     }
-# }
 
 AUTH_PASSWORD_VALIDATORS = []
 
