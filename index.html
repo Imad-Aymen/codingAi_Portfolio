@@ -529,8 +529,15 @@
 
   /* Single API endpoint — injected server-side from the API_ENDPOINT env var
      (settings.py → urls.py → template context). Change the env var on Render
-     without touching this file. Defaults to "/api/registrations/" if not set. */
-  const API_ENDPOINT = "{{ API_ENDPOINT|safe }}";
+     without touching this file. Defaults to "/api/registrations/" if not set.
+     If the Django template tag was not rendered (e.g. opened via Live Server),
+     fall back to the absolute URL of the running Django server. */
+  const _rawEndpoint = "{{ API_ENDPOINT|safe }}";
+  const API_ENDPOINT = (_rawEndpoint.startsWith("{"))
+    ? (window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1"
+        ? "http://127.0.0.1:8000/api/registrations/"
+        : window.location.origin + "/api/registrations/")
+    : _rawEndpoint;
 
   const MAX_IMAGE_BYTES = 12 * 1024 * 1024;   // max source image size before conversion
   const PDF_TIMEOUT_MS = 30000;               // submission request timeout
