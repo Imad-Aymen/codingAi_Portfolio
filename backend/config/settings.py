@@ -101,8 +101,25 @@ MEDIA_ROOT = BASE_DIR / "media"
 MEDIA_URL = "/media/"
 
 if USE_CLOUDINARY:
+    # Django 4.2+ uses STORAGES; keep DEFAULT_FILE_STORAGE for backwards compat
+    STORAGES = {
+        "default": {
+            "BACKEND": "cloudinary_storage.storage.MediaCloudinaryStorage",
+        },
+        "staticfiles": {
+            "BACKEND": "django.contrib.staticfiles.storage.StaticFilesStorage",
+        },
+    }
     DEFAULT_FILE_STORAGE = "cloudinary_storage.storage.MediaCloudinaryStorage"
-    CLOUDINARY_STORAGE = {"CLOUDINARY_URL": CLOUDINARY_URL}
+
+    # Explicit Cloudinary SDK configuration
+    import cloudinary
+    # CLOUDINARY_URL format: cloudinary://api_key:api_secret@cloud_name
+    cloudinary.config(CLOUDINARY_URL=CLOUDINARY_URL)
+
+    CLOUDINARY_STORAGE = {
+        "CLOUDINARY_URL": CLOUDINARY_URL,
+    }
 
 # Safe upload limits (the PDF size is also checked inside the view)
 DATA_UPLOAD_MAX_MEMORY_SIZE = 20 * 1024 * 1024   # 20MB for the whole request
