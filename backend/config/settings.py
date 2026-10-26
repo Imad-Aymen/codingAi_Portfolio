@@ -10,6 +10,10 @@ import os
 from pathlib import Path
 import dj_database_url
 
+# Cloudinary is enabled only when CLOUDINARY_URL is set in the environment.
+CLOUDINARY_URL = os.environ.get("CLOUDINARY_URL", "")
+USE_CLOUDINARY = bool(CLOUDINARY_URL)
+
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 # In production set DJANGO_SECRET_KEY and DJANGO_DEBUG=0
@@ -30,6 +34,8 @@ INSTALLED_APPS = [
     "django.contrib.staticfiles",
     "corsheaders",           # allows requests from the separate frontend origin
     "registrations",         # the single registration app
+    # Cloudinary: only activated when CLOUDINARY_URL env var is present
+    *(["cloudinary_storage", "cloudinary"] if USE_CLOUDINARY else []),
 ]
 
 MIDDLEWARE = [
@@ -86,13 +92,17 @@ USE_TZ = True
 STATIC_URL = "static/"
 
 # ------------------------------------------------------------------
-# Uploaded files: MEDIA_ROOT is a folder separate from the source code.
-# Note: in production replace this with cloud storage via django-storages
-# (S3 / GCS ...) and the matching DEFAULT_FILE_STORAGE, with no changes
-# to the model or the view.
+# Media / uploaded files:
+# - Local dev:   stored in MEDIA_ROOT, served by Django (debug only).
+# - Production:  stored on Cloudinary when CLOUDINARY_URL env var is set.
+#   Set CLOUDINARY_URL=cloudinary://api_key:api_secret@cloud_name on Render.
 # ------------------------------------------------------------------
 MEDIA_ROOT = BASE_DIR / "media"
 MEDIA_URL = "/media/"
+
+if USE_CLOUDINARY:
+    DEFAULT_FILE_STORAGE = "cloudinary_storage.storage.MediaCloudinaryStorage"
+    CLOUDINARY_STORAGE = {"CLOUDINARY_URL": CLOUDINARY_URL}
 
 # Safe upload limits (the PDF size is also checked inside the view)
 DATA_UPLOAD_MAX_MEMORY_SIZE = 20 * 1024 * 1024   # 20MB for the whole request
