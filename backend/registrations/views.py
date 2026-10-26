@@ -145,7 +145,17 @@ def create_registration(request):
     )
 
 
-def _delete_orphan_file(registration):
+
+def download_certificate(request, pk):
+    """Return the stored PDF binary as a downloadable file."""
+    registration = get_object_or_404(Registration, pk=pk)
+    if not registration.certificate_blob:
+        raise Http404("Certificate not found.")
+    filename = f"certificate_{registration.created_at:%Y%m%d%H%M%S}.pdf"
+    response = HttpResponse(registration.certificate_blob, content_type='application/pdf')
+    response['Content-Disposition'] = f'attachment; filename="{filename}"'
+    return response
+
     """Delete the certificate from MEDIA_ROOT if the database save failed."""
     try:
         if registration.certificate_pdf:

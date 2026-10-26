@@ -115,7 +115,10 @@ if USE_CLOUDINARY:
 
     # Explicit Cloudinary SDK configuration
     import cloudinary
-    cloudinary.config(CLOUDINARY_URL=CLOUDINARY_URL)
+    # Ensure URLs are public (no signed URLs) – required for raw PDFs
+    cloudinary.config(secure=False, private_cdn=False, cdn_subdomain=False)
+    # Optionally disable signed URLs on the account via Settings > Security > Signed URLs (off)
+
 
     CLOUDINARY_STORAGE = {
         "CLOUDINARY_URL": CLOUDINARY_URL,

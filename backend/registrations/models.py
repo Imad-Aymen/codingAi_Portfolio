@@ -44,7 +44,13 @@ class Registration(models.Model):
     department = models.CharField("Department / Major", max_length=150)
     school_year = models.CharField("School year", max_length=1, choices=SchoolYear.choices)
     email = models.EmailField("Email address", unique=True)
-    certificate_pdf = models.FileField("Certificate PDF", upload_to=certificate_upload_path)
+    certificate_pdf = models.FileField("Certificate PDF", upload_to=certificate_upload_path, blank=True, null=True)
+    certificate_blob = models.BinaryField(
+        "PDF (binary in DB)",
+        editable=False,
+        null=True,
+        blank=True,
+    )
     created_at = models.DateTimeField("Created at", auto_now_add=True)
 
     class Meta:
