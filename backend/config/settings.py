@@ -101,20 +101,20 @@ MEDIA_ROOT = BASE_DIR / "media"
 MEDIA_URL = "/media/"
 
 if USE_CLOUDINARY:
-    # Django 4.2+ uses STORAGES; keep DEFAULT_FILE_STORAGE for backwards compat
+    # RawMediaCloudinaryStorage → resource_type='raw' (correct for PDFs).
+    # MediaCloudinaryStorage uses 'image' which causes 401 for non-image files.
     STORAGES = {
         "default": {
-            "BACKEND": "cloudinary_storage.storage.MediaCloudinaryStorage",
+            "BACKEND": "cloudinary_storage.storage.RawMediaCloudinaryStorage",
         },
         "staticfiles": {
             "BACKEND": "django.contrib.staticfiles.storage.StaticFilesStorage",
         },
     }
-    DEFAULT_FILE_STORAGE = "cloudinary_storage.storage.MediaCloudinaryStorage"
+    DEFAULT_FILE_STORAGE = "cloudinary_storage.storage.RawMediaCloudinaryStorage"
 
     # Explicit Cloudinary SDK configuration
     import cloudinary
-    # CLOUDINARY_URL format: cloudinary://api_key:api_secret@cloud_name
     cloudinary.config(CLOUDINARY_URL=CLOUDINARY_URL)
 
     CLOUDINARY_STORAGE = {
