@@ -8,7 +8,9 @@ from django.urls import include, path
 
 
 def index(request):
-    return render(request, "index.html")
+    return render(request, "index.html", {
+        "API_ENDPOINT": settings.API_ENDPOINT,
+    })
 
 
 urlpatterns = [

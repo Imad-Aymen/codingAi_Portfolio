@@ -527,9 +527,10 @@
      Order: constants -> state -> validation -> preview/PDF -> navigation -> submission
      ===================================================================== */
 
-  /* Single API endpoint: change this constant when the server address changes.
-     It must match the path defined in config/urls.py + registrations/urls.py. */
-  const API_ENDPOINT = "http://localhost:8000/api/registrations/";
+  /* Single API endpoint — injected server-side from the API_ENDPOINT env var
+     (settings.py → urls.py → template context). Change the env var on Render
+     without touching this file. Defaults to "/api/registrations/" if not set. */
+  const API_ENDPOINT = "{{ API_ENDPOINT|safe }}";
 
   const MAX_IMAGE_BYTES = 12 * 1024 * 1024;   // max source image size before conversion
   const PDF_TIMEOUT_MS = 30000;               // submission request timeout

@@ -112,3 +112,10 @@ CORS_ALLOWED_ORIGINS = [o.strip() for o in os.environ.get("CORS_ALLOWED_ORIGINS"
 CORS_ALLOW_CREDENTIALS = True
 # Only needed if CSRF protection is enabled later (UI sends X-CSRFToken)
 CSRF_TRUSTED_ORIGINS = CORS_ALLOWED_ORIGINS
+
+# ------------------------------------------------------------------
+# API endpoint injected into index.html via Django template.
+# Default: relative URL (works when Django serves the frontend).
+# Override with API_ENDPOINT env var for a separate frontend deployment.
+# ------------------------------------------------------------------
+API_ENDPOINT = os.environ.get("API_ENDPOINT", "/api/registrations/")
