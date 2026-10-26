@@ -1,6 +1,7 @@
 """API endpoints for CODING AI registration portal.
 
 POST /api/registrations/  - Student registration
+GET  /api/registrations/<pk>/download/ - Download certificate PDF from DB
 """
 
 import logging
@@ -9,9 +10,9 @@ import os
 from django.core.exceptions import ValidationError
 from django.core.validators import validate_email
 from django.db import IntegrityError, transaction
-from django.http import JsonResponse
+from django.http import Http404, HttpResponse, JsonResponse
+from django.shortcuts import get_object_or_404
 from django.views.decorators.csrf import csrf_exempt
-from django.views.decorators.http import require_http_methods
 
 from .models import Registration, SchoolYear
 
@@ -108,27 +109,29 @@ def create_registration(request):
             errors={"email": "duplicate"},
         )
 
+    # Read PDF bytes for binary storage in the database
+    uploaded.seek(0)
+    pdf_bytes = uploaded.read()
+    uploaded.seek(0)
+
     registration = Registration(
         full_name=full_name,
         department=department,
         school_year=school_year,
         email=email,
-        certificate_pdf=uploaded,
+        certificate_blob=pdf_bytes,  # store binary in PostgreSQL
     )
 
     try:
         with transaction.atomic():
             registration.save()
     except IntegrityError:
-        # Guard against a race between two requests with the same email; clean the file
-        _delete_orphan_file(registration)
         return error_response(
             "This email address is already registered with CODING AI.",
             status=400,
             errors={"email": "duplicate"},
         )
     except Exception:
-        _delete_orphan_file(registration)
         logger.exception("Unexpected error while saving the registration")
         return error_response("A server error occurred while saving the registration. Try again later.", status=500)
 
@@ -137,7 +140,7 @@ def create_registration(request):
             "success": True,
             "message": "Your CODING AI registration was saved successfully.",
             "id": registration.id,
-            "certificate_url": request.build_absolute_uri(registration.certificate_pdf.url),
+            "certificate_url": f"/api/registrations/{registration.id}/download/",
             "created_at": registration.created_at.isoformat(),
         },
         status=201,
@@ -147,20 +150,11 @@ def create_registration(request):
 
 
 def download_certificate(request, pk):
-    """Return the stored PDF binary as a downloadable file."""
+    """Return the PDF binary stored in PostgreSQL as a downloadable file."""
     registration = get_object_or_404(Registration, pk=pk)
     if not registration.certificate_blob:
-        raise Http404("Certificate not found.")
-    filename = f"certificate_{registration.created_at:%Y%m%d%H%M%S}.pdf"
-    response = HttpResponse(registration.certificate_blob, content_type='application/pdf')
-    response['Content-Disposition'] = f'attachment; filename="{filename}"'
+        raise Http404("No certificate PDF found for this registration.")
+    filename = f"certificate_{registration.id}_{registration.created_at:%Y%m%d%H%M%S}.pdf"
+    response = HttpResponse(bytes(registration.certificate_blob), content_type="application/pdf")
+    response["Content-Disposition"] = f'attachment; filename="{filename}"'
     return response
-
-    """Delete the certificate from MEDIA_ROOT if the database save failed."""
-    try:
-        if registration.certificate_pdf:
-            registration.certificate_pdf.delete(save=False)
-    except Exception:
-        logger.exception("Could not delete the orphan PDF after a failed save")
-
-

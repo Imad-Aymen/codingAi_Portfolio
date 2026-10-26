@@ -1,6 +1,7 @@
 """Admin configuration for the registrations app."""
 
 from django.contrib import admin
+from django.urls import reverse
 from django.utils.html import format_html
 
 from .models import Registration
@@ -15,11 +16,12 @@ class RegistrationAdmin(admin.ModelAdmin):
     readonly_fields = ("created_at", "pdf_link")
 
     def pdf_link(self, obj):
-        """Show a clickable download link for the certificate PDF."""
-        if obj.certificate_pdf:
+        """Show a clickable download link for the certificate PDF stored in the database."""
+        if obj.certificate_blob:
+            url = reverse("certificate-download", args=[obj.pk])
             return format_html(
                 '<a href="{}" target="_blank">📄 تحميل PDF</a>',
-                obj.certificate_pdf.url,
+                url,
             )
         return "—"
 
